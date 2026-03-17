@@ -2,6 +2,7 @@ import json
 import os
 import urllib.request
 import urllib.error
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler
 
 class handler(BaseHTTPRequestHandler):
@@ -21,26 +22,57 @@ class handler(BaseHTTPRequestHandler):
             return
 
         length = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(length)
+        body_bytes = self.rfile.read(length)
+
+        try:
+            body = json.loads(body_bytes)
+        except Exception:
+            self.send_response(400)
+            self._headers()
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": {"message": "Body JSON invalido"}}).encode())
+            return
+
+        today = datetime.utcnow().strftime("%d/%m/%Y")
+
+        if "messages" in body and body["messages"]:
+            last = body["messages"][-1]
+            if last.get("role") == "user":
+                last["content"] = f"[Fecha actual: {today}]\n\n{last['content']}"
+
+        body["tools"] = [{"type": "web_search_20250305", "name": "web_search"}]
+        body["max_tokens"] = 4000
+
+        payload = json.dumps(body).encode()
 
         req = urllib.request.Request(
             "https://api.anthropic.com/v1/messages",
-            data=body,
+            data=payload,
             headers={
                 "Content-Type": "application/json",
                 "x-api-key": api_key,
-                "anthropic-version": "2023-06-01"
+                "anthropic-version": "2023-06-01",
+                "anthropic-beta": "web-search-2025-03-05"
             },
             method="POST"
         )
 
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=55) as resp:
                 result = resp.read()
+
+            data = json.loads(result)
+            text_content = ""
+            if "content" in data:
+                for block in data["content"]:
+                    if block.get("type") == "text":
+                        text_content += block.get("text", "")
+
+            simplified = {"content": [{"type": "text", "text": text_content}]}
             self.send_response(200)
             self._headers()
             self.end_headers()
-            self.wfile.write(result)
+            self.wfile.write(json.dumps(simplified).encode())
 
         except urllib.error.HTTPError as e:
             error_body = e.read()
