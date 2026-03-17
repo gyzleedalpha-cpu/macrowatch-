@@ -41,7 +41,7 @@ class handler(BaseHTTPRequestHandler):
                 last["content"] = f"[Fecha actual: {today}]\n\n{last['content']}"
 
         body["tools"] = [{"type": "web_search_20250305", "name": "web_search"}]
-        body["max_tokens"] = 4000
+        body["max_tokens"] = 1024
 
         payload = json.dumps(body).encode()
 
