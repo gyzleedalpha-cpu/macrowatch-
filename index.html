@@ -301,7 +301,7 @@ async function callAPI(prompt){
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"claude-sonnet-4-20250514",
+        model:"claude-haiku-4-5-20251001",
         max_tokens:4000,
         system:"Responde ÚNICAMENTE con JSON válido. Sin texto extra. Sin markdown. Solo el objeto JSON. Cerrá siempre todos los corchetes.",
         messages:[{role:"user",content:prompt}]
@@ -330,7 +330,7 @@ async function genSummary(news){
   try{
     const res = await fetch("/api/chat",{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:4000,
         messages:[{role:"user",content:`Basado en:\n${titles}\n\nEscribe 2-3 frases de análisis macro ejecutivo. Tono del mercado hoy, eventos clave, impacto esperado. Directo y profesional.`}]
       })
     });
